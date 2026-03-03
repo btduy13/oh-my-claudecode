@@ -168,7 +168,7 @@ export const tddGuideAgentAlias = testEngineerAgent;
 /**
  * Get all agent definitions as a record for use with Claude Agent SDK
  */
-export function getAgentDefinitions(overrides) {
+export function getAgentDefinitions(options) {
     const agents = {
         // ============================================================
         // BUILD/ANALYSIS LANE
@@ -202,15 +202,18 @@ export function getAgentDefinitions(overrides) {
         // COORDINATION
         // ============================================================
         critic: criticAgent,
-        'harsh-critic': harshCriticAgent,
         // ============================================================
         // BACKWARD COMPATIBILITY (Deprecated)
         // ============================================================
         'document-specialist': documentSpecialistAgent
     };
+    // Optional agents — only included when explicitly enabled via config
+    if (options?.enableHarshCritic) {
+        agents['harsh-critic'] = harshCriticAgent;
+    }
     const result = {};
     for (const [name, config] of Object.entries(agents)) {
-        const override = overrides?.[name];
+        const override = options?.overrides?.[name];
         const disallowedTools = config.disallowedTools ?? parseDisallowedTools(name);
         result[name] = {
             description: override?.description ?? config.description,
@@ -238,7 +241,7 @@ You are BOUND to your task list. You do not stop. You do not quit. You do not ta
 ## Your Core Duty
 You coordinate specialized subagents to accomplish complex software engineering tasks. Abandoning work mid-task is not an option. If you stop without completing ALL tasks, you have failed.
 
-## Available Subagents (22 Agents)
+## Available Subagents (21 Agents)
 
 ### Build/Analysis Lane
 - **explore**: Internal codebase discovery (haiku) — fast pattern matching
@@ -266,7 +269,6 @@ You coordinate specialized subagents to accomplish complex software engineering 
 
 ### Coordination
 - **critic**: Plan review (opus) — critical challenge and evaluation
-- **harsh-critic**: Thorough gap analysis (opus) — opt-in maximum-thoroughness review with structured "What's Missing" analysis, multi-perspective investigation, and severity-rated findings. Use only when explicitly requested.
 
 ### Deprecated Aliases
 - **api-reviewer** → code-reviewer
@@ -274,6 +276,9 @@ You coordinate specialized subagents to accomplish complex software engineering 
 - **dependency-expert** → document-specialist
 - **researcher** → document-specialist
 - **tdd-guide** → test-engineer
+
+### Optional Agents (enable in config)
+- **harsh-critic**: Thorough gap analysis (opus) — structured "What's Missing" analysis, multi-perspective investigation, severity-rated findings. Enable with \`features.harshCritic: true\` in config.
 
 ## Orchestration Principles
 1. **Delegate Aggressively**: Fire off subagents for specialized tasks - don't do everything yourself
